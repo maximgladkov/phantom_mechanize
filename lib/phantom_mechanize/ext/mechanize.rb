@@ -1,3 +1,5 @@
+require 'fileutils'
+
 class Mechanize
   def phget url, *args
     args = args[0] || {}
@@ -21,7 +23,18 @@ class Mechanize
   
       cmd = "phantomjs #{ph_args.join(' ')} \"#{PhantomMechanize::JS_FOLDER}/phget.js\" \"#{url}\" \"#{wait}\" \"#{selector.to_json.gsub('\"', '\\"')}\" \"#{pc.gsub('\"', '\\"')}\" \"#{user_agent.gsub('\"', '\\"')}\" \"#{js.to_json.gsub('\"', '\\"')}\" \"#{scroll.to_json}\""
       
-      %x[#{cmd}]      	
+      %x[#{cmd}].tap do |response|
+        if cassette
+          dirname = ::File.dirname(cassette_file_path)
+          unless ::File.directory?(dirname)
+            ::FileUtils.mkdir_p(dirname)
+          end
+          
+          ::File.open(cassette_file_path, "w+") do |f|
+            f.write(response)
+          end
+        end
+      end
     end
 
     raise 'bad response' if response == ''
