@@ -4,8 +4,8 @@ class Mechanize
     cassette = args[:cassette]
     cassette_file_path = Rails.root.join("spec/cassettes", cassette)
     
-    response = if cassette && File.exists?(cassette_file_path)
-      File.read(cassette_file_path)
+    response = if cassette && ::File.exists?(cassette_file_path)
+      ::File.read(cassette_file_path)
     else
       wait = args[:wait] || 10000
       selector = args[:selector] || ""
