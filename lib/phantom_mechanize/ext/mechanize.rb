@@ -1,21 +1,28 @@
 class Mechanize
-	def phget url, *args
-    
+  def phget url, *args
     args = args[0] || {}
-    wait = args[:wait] || 10000
-    selector = args[:selector] || ""
-    scroll = args[:scroll] ? 1 : 0
-    selector = [selector] if selector.is_a?(String)
-    js = args[:js] || ""
-    js = [js] if js.is_a?(String)
-
-    pc = cookies.map{|c| [c.name, c.value, c.domain, c.path, c.httponly, c.secure, c.expires.to_i]}.to_json
-
-    ph_args = ['--ssl-protocol=any', '--web-security=false']
-    ph_args << "--proxy=#{proxy_addr}:#{proxy_port}" if proxy_port && proxy_addr
-
-    cmd = "phantomjs #{ph_args.join(' ')} \"#{PhantomMechanize::JS_FOLDER}/phget.js\" \"#{url}\" \"#{wait}\" \"#{selector.to_json.gsub('\"', '\\"')}\" \"#{pc.gsub('\"', '\\"')}\" \"#{user_agent.gsub('\"', '\\"')}\" \"#{js.to_json.gsub('\"', '\\"')}\" \"#{scroll.to_json}\""
-    response = %x[#{cmd}]
+    cassette = args[:cassette]
+    cassette_file_path = Rails.root.join("spec/cassettes", cassette)
+    
+    response = if cassette && File.exists?(cassette_file_path)
+      File.read(cassette_file_path)
+    else
+      wait = args[:wait] || 10000
+      selector = args[:selector] || ""
+      scroll = args[:scroll] ? 1 : 0
+      selector = [selector] if selector.is_a?(String)
+      js = args[:js] || ""
+      js = [js] if js.is_a?(String)
+  
+      pc = cookies.map{|c| [c.name, c.value, c.domain, c.path, c.httponly, c.secure, c.expires.to_i]}.to_json
+  
+      ph_args = ['--ssl-protocol=any', '--web-security=false']
+      ph_args << "--proxy=#{proxy_addr}:#{proxy_port}" if proxy_port && proxy_addr
+  
+      cmd = "phantomjs #{ph_args.join(' ')} \"#{PhantomMechanize::JS_FOLDER}/phget.js\" \"#{url}\" \"#{wait}\" \"#{selector.to_json.gsub('\"', '\\"')}\" \"#{pc.gsub('\"', '\\"')}\" \"#{user_agent.gsub('\"', '\\"')}\" \"#{js.to_json.gsub('\"', '\\"')}\" \"#{scroll.to_json}\""
+      
+      %x[#{cmd}]      	
+    end
 
     raise 'bad response' if response == ''
 
@@ -26,5 +33,5 @@ class Mechanize
     end
 
     page = Mechanize::Page.new URI.parse(url), [], html, nil, self
-	end
+  end
 end
